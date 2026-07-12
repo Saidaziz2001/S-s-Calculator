@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Calculator by Saidaziz</title>
+<style>
+  :root {
+    --bg-app: #EEF1F6;
+    --bg-card: #FFFFFF;
+    --separator: #E1E4EA;
+    --text-main: #1C1C1E;
+    --text-secondary: #8A8F98;
+    --accent: #007AFF;
+    --accent-pressed: #0060DF;
+    --accent-soft: #E8F1FF;
+    --good: #248A3D;
+    --good-soft: #E8F9EC;
+    --warn: #B5650A;
+    --warn-soft: #FFF4E5;
+    --danger: #D70015;
+    --danger-soft: #FFEBEA;
+    --input-fill: #F0F2F6;
+    --radius: 18px;
+    --radius-sm: 12px;
+  }
+  [data-theme="dark"] {
+    --bg-app: #0A0B0F;
+    --bg-card: #1C1D22;
+    --separator: #34363F;
+    --text-main: #F2F3F5;
+    --text-secondary: #9A9CA5;
+    --accent: #0A84FF;
+    --accent-pressed: #409CFF;
+    --accent-soft: #152238;
+    --good: #30D158;
+    --good-soft: #12281A;
+    --warn: #FF9F0A;
+    --warn-soft: #332409;
+    --danger: #FF453A;
+    --danger-soft: #331311;
+    --input-fill: #26272E;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg-app); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  body { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+  header.topbar {
+    position: sticky; top: 0; z-index: 20; background: var(--bg-app);
+    padding: calc(14px + env(safe-area-inset-top)) 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--separator);
+  }
+  header.topbar .title { font-size: 19px; font-weight: 700; }
+  header.topbar .subtitle { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
+  .theme-btn {
+    border: none; background: var(--input-fill); color: var(--text-main);
+    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 14px 14px 24px; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein .15s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  .section-label {
+    font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--text-secondary); margin: 18px 4px 8px;
+  }
+  .card {
+    background: var(--bg-card); border-radius: var(--radius); padding: 16px;
+    margin-bottom: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 0 0 1px var(--separator);
+  }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+  .field-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .field { flex: 1 1 130px; min-width: 110px; }
+  .field.wide { flex: 2 1 220px; }
+  .field label {
+    display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 500;
+  }
+  input[type=text], input[type=number], select {
+    width: 100%; border: none; background: var(--input-fill); color: var(--text-main);
+    border-radius: var(--radius-sm); padding: 11px 12px; font-size: 15px; font-family: inherit;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hint { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+  .money-row { display: flex; gap: 8px; align-items: center; }
+  .money-row input { flex: 1; }
+  .segmented {
+    display: flex; background: var(--input-fill); border-radius: 999px; padding: 2px; flex-shrink: 0;
+  }
+  .segmented button {
+    border: none; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 700;
+    padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .segmented button.active { background: var(--bg-card); color: var(--text-main); }
+
+  .note-box {
+    background: var(--accent-soft); color: var(--accent); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 12.5px; line-height: 1.5; margin-top: 8px;
+  }
+  .note-box.warn { background: var(--warn-soft); color: var(--warn); }
+
+  .btn {
+    border: none; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+  }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:active { background: var(--accent-pressed); }
+  .btn.secondary { background: var(--input-fill); color: var(--accent); }
+  .btn.danger { background: var(--danger-soft); color: var(--danger); }
+  .btn.block { width: 100%; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+  .item-card {
+    background: var(--bg-card); border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    box-shadow: 0 0 0 1px var(--separator); cursor: pointer;
+  }
+  .item-card-main { min-width: 0; flex: 1; }
+  .item-card-title { font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .item-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    border: none; background: var(--input-fill); width: 34px; height: 34px; border-radius: 50%;
+    font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn.danger { background: var(--danger-soft); }
+
+  .result-card { border-left: 4px solid transparent; }
+  .result-card.best { border-left-color: var(--good); background: var(--good-soft); }
+  .result-card.cargo { box-shadow: 0 0 0 1px var(--warn); }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 12.5px; margin-top: 8px; }
+  .result-grid b { font-size: 14px; }
+  .result-total { font-size: 17px; font-weight: 800; margin-top: 10px; }
+
+  details.dims { margin-top: 4px; }
+  details.dims summary {
+    cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 600; padding: 6px 0;
+    list-style: none;
+  }
+  details.dims summary::-webkit-details-marker { display: none; }
+  details.dims summary::before { content: "▸ "; }
+  details.dims[open] summary::before { content: "▾ "; }
+  .dims-group-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 10px 0 6px; }
+
+  nav.tabbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    background: var(--bg-card); border-top: 1px solid var(--separator);
+    display: flex; padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav.tabbar button {
+    flex: 1; border: none; background: transparent; padding: 9px 2px 8px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--text-secondary); font-size: 10.5px; font-weight: 600; font-family: inherit;
+  }
+  nav.tabbar button .tab-icon { font-size: 20px; }
+  nav.tabbar button.active { color: var(--accent); }
+
+  .overlay {
+    display: none; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.4);
+    align-items: flex-end; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .sheet {
+    background: var(--bg-app); width: 100%; max-width: 720px; max-height: 86vh; overflow-y: auto;
+    border-radius: 20px 20px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 760px) {
+    .overlay { align-items: center; }
+    .sheet { border-radius: 20px; max-height: 80vh; }
+  }
+  .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+  .sheet-title { font-size: 16px; font-weight: 800; }
+  .sheet-close { border: none; background: var(--input-fill); width: 32px; height: 32px; border-radius: 50%; font-size: 15px; cursor: pointer; flex-shrink: 0; }
+  .detail-text { white-space: pre-wrap; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px; line-height: 1.6; background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px; box-shadow: 0 0 0 1px var(--separator); }
+
+  .empty-state { text-align: center; color: var(--text-secondary); font-size: 13px; padding: 30px 10px; }
+  #import-file-input { display: none; }
+
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 40;
+    background: var(--bg-card); border-radius: var(--radius-sm); overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18), 0 0 0 1px var(--separator); min-width: 190px;
+  }
+  .dropdown-menu a {
+    display: block; padding: 11px 14px; color: var(--accent); text-decoration: none;
+    font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--separator);
+  }
+  .dropdown-menu a:last-child { border-bottom: none; }
+  .dropdown-menu a:hover, .dropdown-menu a:active { background: var(--input-fill); }
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="max-width:480px;margin:60px auto;padding:24px;font-family:-apple-system,sans-serif;
+              background:#FFF4E5;color:#B5650A;border-radius:16px;line-height:1.6;">
+    <h2 style="margin-top:0;">Нужен полноценный Safari, а не быстрый просмотр</h2>
+    <p>Эта страница открылась в режиме предпросмотра (Quick Look) — он показывает вёрстку,
+       но не выполняет JavaScript, поэтому все поля и списки пустые.</p>
+    <p><b>Как открыть правильно на iPhone:</b> в приложении «Файлы» нажмите и удерживайте
+       файл → «Поделиться» → выберите Safari в списке приложений (если пункта нет — см.
+       способ ниже). На Android откройте файл через Chrome — там обычно всё работает сразу.</p>
+    <p><b>Самый надёжный способ (работает всегда, на любом устройстве):</b> зайдите на
+       <b>app.netlify.com/drop</b> с компьютера, перетащите туда этот файл — через несколько
+       секунд получите обычную ссылку https://..., которая открывается в Safari или Chrome
+       как настоящая веб-страница, без всяких Quick Look.</p>
+  </div>
+</noscript>
+
+<header class="topbar">
+  <div>
+    <div class="title">Calculator by Saidaziz</div>
+    <div class="subtitle">Китай → Узбекистан</div>
+  </div>
+  <button class="theme-btn" id="btn-theme" onclick="toggleTheme()">🌙 Тёмная</button>
+</header>
+
+<main>
+  <!-- ===================== НАСТРОЙКИ ===================== -->
+  <section class="screen" id="screen-settings">
+    <div class="card">
+      <div class="card-title">Базис Инкотермс</div>
+      <label class="hint" style="margin-bottom:6px;display:block;">Условия поставки по контракту</label>
+      <select id="incoterm-select" onchange="onIncotermChange()"></select>
+      <div class="note-box" id="incoterm-note"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Курс валюты</div>
+      <div class="field-row">
+        <div class="field"><label>Валюта</label><select id="currency-select" onchange="onCurrencyChange()"></select></div>
+        <div class="field wide">
+          <label>Курс <span id="fx-cur-label">валюты</span> → сум (UZS)</label>
+          <div class="money-row">
+            <input type="text" inputmode="decimal" id="fx-rate" placeholder="курс">
+            <button class="btn secondary" style="flex:0 0 auto; padding:9px 14px;" onclick="fetchRateForSelected()">🔄 ЦБ</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint" id="fx-hint">Курс можно подтянуть с cbu.uz на актуальную дату (кнопка «ЦБ») или ввести вручную.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Налоги и таможня</div>
+      <div class="field-row">
+        <div class="field"><label>Ставка НДС, %</label><input type="text" inputmode="decimal" id="vat-rate" placeholder="напр. 12"></div>
+        <div class="field"><label>Доля доставки в тамож. ст-ти, %</label><input type="text" inputmode="decimal" id="border-share" placeholder="напр. 100"></div>
+      </div>
+      <div class="hint">Долю доставки в таможенной стоимости вводите вручную — под ваш базис поставки.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Фиксированные расходы на партию</div>
+      <div id="fixed-costs-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Данные приложения</div>
+      <div class="hint" style="margin-bottom:10px;">
+        Веб-версия не хранит данные автоматически между посещениями — скачайте файл данных,
+        чтобы не набирать всё заново в следующий раз, и загрузите его перед началом работы.
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="exportJson()">⬇️ Скачать данные (JSON)</button>
+        <button class="btn secondary" onclick="document.getElementById('import-file-input').click()">⬆️ Загрузить данные</button>
+      </div>
+      <input type="file" id="import-file-input" accept="application/json" onchange="importJson(event)">
+    </div>
+  </section>
+
+  <!-- ===================== ТОВАРЫ ===================== -->
+  <section class="screen" id="screen-products">
+    <div class="card">
+      <div class="card-title" id="product-form-title">Добавить товар</div>
+      <div class="field-row">
+        <div class="field wide"><label>Название</label><input type="text" id="p-name" placeholder="введите название товара"></div>
+        <div class="field"><label>Код ТН ВЭД</label><input type="text" id="p-hs" placeholder="введите код тн вэд"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Кол-во, шт</label><input type="text" inputmode="decimal" id="p-qty"></div>
+        <div class="field"><label>Цена за шт</label><input type="text" inputmode="decimal" id="p-price"></div>
+        <div class="field"><label>Валюта товара</label><select id="p-currency"></select></div>
+        <div class="field"><label>Вес 1 шт, кг</label><input type="text" inputmode="decimal" id="p-weight"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Пошлина, %</label><input type="text" inputmode="decimal" id="p-duty"></div>
+        <div class="field"><label>Сертификация</label><input type="text" inputmode="decimal" id="p-cert"></div>
+        <div class="field"><label>Страховка</label><input type="text" inputmode="decimal" id="p-insurance"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Вес нетто NW, кг</label><input type="text" inputmode="decimal" id="p-nw"></div>
+        <div class="field"><label>Вес брутто GW, кг</label><input type="text" inputmode="decimal" id="p-gw"></div>
+      </div>
+      <div class="hint" style="margin-bottom:10px;">Цена, сертификация и страховка — в валюте товара. Итоги пересчитываются в валюту расчёта (вкладка «Настройки») по курсу ЦБ.</div>
+
+      <details class="dims">
+        <summary>Габариты груза (для объёма и объёмного веса)</summary>
+        <div class="dims-group-label">Единица товара, см</div>
+        <div class="field-row">
+          <div class="field"><label>Длина</label><input type="text" inputmode="decimal" id="p-unit-l"></div>
+          <div class="field"><label>Ширина</label><input type="text" inputmode="decimal" id="p-unit-w"></div>
+          <div class="field"><label>Высота</label><input type="text" inputmode="decimal" id="p-unit-h"></div>
+        </div>
+        <div class="dims-group-label">Короб, см</div>
+        <div class="field-row">
+          <div class="field"><label>Длина</label><input type="text" inputmode="decimal" id="p-box-l"></div>
+          <div class="field"><label>Ширина</label><input type="text" inputmode="decimal" id="p-box-w"></div>
+          <div class="field"><label>Высота</label><input type="text" inputmode="decimal" id="p-box-h"></div>
+          <div class="field"><label>Шт в коробе</label><input type="text" inputmode="decimal" id="p-units-per-box"></div>
+        </div>
+        <div class="dims-group-label">Паллета, см</div>
+        <div class="field-row">
+          <div class="field"><label>Длина</label><input type="text" inputmode="decimal" id="p-pallet-l"></div>
+          <div class="field"><label>Ширина</label><input type="text" inputmode="decimal" id="p-pallet-w"></div>
+          <div class="field"><label>Высота</label><input type="text" inputmode="decimal" id="p-pallet-h"></div>
+          <div class="field"><label>Кол-во паллет</label><input type="text" inputmode="decimal" id="p-pallet-qty"></div>
+        </div>
+      </details>
+
+      <div class="btn-row">
+        <button class="btn primary" id="btn-save-product" onclick="saveProduct()">Добавить товар</button>
+        <div class="dropdown">
+          <button class="btn secondary" onclick="toggleConfigMenu(event)">🧮 Конфигуратор ▾</button>
+          <div id="config-menu" class="dropdown-menu">
+            <a href="https://palcalc.com/" target="_blank" rel="noopener noreferrer">palcalc.com</a>
+            <a href="https://www.ptchronos.com/pallet-calculator" target="_blank" rel="noopener noreferrer">ptchronos.com</a>
+            <a href="https://palletize3d.com/" target="_blank" rel="noopener noreferrer">palletize3d</a>
+            <a href="https://app.loggy.pl/" target="_blank" rel="noopener noreferrer">app.loggy.pl</a>
+          </div>
+        </div>
+        <button class="btn secondary" onclick="showCarrierData()">📦 Для перевозчика</button>
+        <button class="btn secondary" id="btn-cancel-edit" onclick="resetProductForm()" style="display:none;">Отмена</button>
+      </div>
+    </div>
+
+    <div class="section-label">Список товаров</div>
+    <div id="products-list"></div>
+  </section>
+
+  <!-- ===================== ДОСТАВКА ===================== -->
+  <section class="screen" id="screen-delivery">
+    <div class="hint" style="margin:0 4px 12px;">
+      Добавьте способы доставки и укажите <b>общую сумму</b> за доставку по каждому (не тариф за кг).
+      Способы можно сравнить между собой во вкладке «Результат».
+    </div>
+    <div id="delivery-options-list"></div>
+    <button class="btn primary block" style="margin-top:4px;" onclick="addDeliveryOption()">+ Добавить</button>
+  </section>
+
+  <!-- ===================== РЕЗУЛЬТАТ ===================== -->
+  <section class="screen" id="screen-results">
+    <div class="btn-row" style="margin-bottom:12px;">
+      <button class="btn primary block" onclick="runCalculation()">Рассчитать</button>
+    </div>
+    <div class="hint" id="results-summary" style="margin:0 4px 10px;">Заполните товары и нажмите «Рассчитать».</div>
+    <div id="results-list"></div>
+    <div class="btn-row" id="results-export-row" style="display:none; margin-top:10px;">
+      <button class="btn secondary" onclick="exportResultsXlsx()">⬇️ Экспорт в Excel</button>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-tab="settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>Настройки</button>
+  <button class="tab-btn" data-tab="products" onclick="switchTab('products')"><span class="tab-icon">📦</span>Товары</button>
+  <button class="tab-btn" data-tab="delivery" onclick="switchTab('delivery')"><span class="tab-icon">🚚</span>Доставка</button>
+  <button class="tab-btn" data-tab="results" onclick="switchTab('results')"><span class="tab-icon">📊</span>Результат</button>
+</nav>
+
+<div class="overlay" id="detail-overlay" onclick="if(event.target===this) closeDetail()">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title" id="detail-title">Детальный расчёт</div>
+      <button class="sheet-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-text" id="detail-text"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn primary block" onclick="copyDetail()">Скопировать расчёт</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="carrier-overlay" onclick="if(event.target===this) closeCarrier()">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Данные для перевозчика</div>
+      <button class="sheet-close" onclick="closeCarrier()">✕</button>
+    </div>
+    <div class="detail-text" id="carrier-text"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn primary block" onclick="copyCarrier()">Скопировать текст</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ДАННЫЕ: Инкотермс, способы доставки по умолчанию
+   ===================================================================== */
+const INCOTERMS = {
+  EXW: {borderShare: 100, note: "Цена только со склада завода. Вся доставка (включая Китай) ваша — в таможенную стоимость добавляется полная стоимость доставки."},
+  FCA: {borderShare: 100, note: "Продавец передаёт груз перевозчику в Китае. Международная доставка целиком на вас, как и в EXW."},
+  FOB: {borderShare: 100, note: "Продавец грузит на борт/терминал в Китае. Фрахт/доставку до Узбекистана оплачиваете вы — добавляется полностью."},
+  CFR: {borderShare: 25, note: "Фрахт до пункта назначения уже включён продавцом в цену. Добавляется только остаток пути и страховка."},
+  CIF: {borderShare: 20, note: "Фрахт и страхование до пункта назначения уже в цене. Добавляется в основном внутренняя логистика."},
+  CPT: {borderShare: 25, note: "Перевозка до согласованного места уже оплачена продавцом."},
+  CIP: {borderShare: 20, note: "Перевозка и страхование до места назначения уже в цене."},
+  DAP: {borderShare: 8, note: "Продавец доставляет почти до двери. Добавляется минимум — последняя миля/разгрузка."},
+  DDP: {borderShare: 0, note: "Продавец отвечает и за доставку, и формально за пошлины/НДС. Встречается редко в схеме Китай-Узбекистан — уточняйте, кто фактически декларант."},
+};
+
+function defaultDeliveryModes() {
+  return [
+    {key: "truck", label: "Фура (сборный груз)", ratePerKgUsd: 1.10, transitDays: "18-25 дней",
+     notes: "Экономичный вариант для текстиля и обуви. Риск — задержки на границе в сезон.", volumetric: false},
+    {key: "truck_fast", label: "Ускоренная фура", ratePerKgUsd: 1.55, transitDays: "10-15 дней",
+     notes: "Отдельный/полузагруженный транспорт, приоритет на границе.", volumetric: false},
+    {key: "rail", label: "ЖД контейнер", ratePerKgUsd: 0.85, transitDays: "20-30 дней",
+     notes: "Дешевле при больших объёмах. Риск — простой на погранпереходах.", volumetric: false},
+    {key: "sea", label: "Море (контейнер)", ratePerKgUsd: 0.55, transitDays: "35-50 дней",
+     notes: "Прямого моря в Узбекистан нет: груз идёт морем до порта, далее ж/д или фурой. Указывайте тариф за весь путь, либо соберите его по участкам ниже.", volumetric: false},
+    {key: "air", label: "Авиа", ratePerKgUsd: 4.20, transitDays: "3-7 дней",
+     notes: "Тариф считается по большему из факт./объёмного веса (1:6000).", volumetric: true},
+    {key: "cargo", label: "Карго (упрощённая схема)", ratePerKgUsd: 2.60, transitDays: "12-18 дней",
+     notes: "Серая схема, часто без полного пакета документов. Юридический риск.", volumetric: false},
+  ];
+}
+
+/* Список способов доставки для выпадающего списка (только ключ + название) */
+function deliveryMethods() {
+  return defaultDeliveryModes().map(m => ({key: m.key, label: m.label}));
+}
+function methodLabel(key) {
+  const m = deliveryMethods().find(x => x.key === key);
+  return m ? m.label : key;
+}
+
+/* =====================================================================
+   СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+   ===================================================================== */
+let state = {
+  darkMode: window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  incoterm: "",
+  currency: "USD",       // выбранная валюта контракта (курс тянется из ЦБ)
+  currencies: [],        // список валют с cbu.uz: [{ccy, name, rate, nominal, date}]
+  settings: {
+    broker: {amount: "", currency: "USD", label: "Таможенный брокер", hint: ""},
+    local: {amount: "", currency: "USD", label: "Логистика по стране получателя", hint: ""},
+    recipientDelivery: {amount: "", currency: "USD", label: "Доставка до склада получателя", hint: ""},
+    warehouse: {amount: "", currency: "USD", label: "Складские расходы", hint: ""},
+    other: {amount: "", currency: "USD", label: "Резерв на непредвиденное", hint: "Например 3-5% от стоимости товара"},
+  },
+  products: [],
+  deliveryOptions: [],   // {methodKey, amount (строка), currency}
+  editingProductId: null,
+  resultRows: [],   // {product, mode, r, settingsSnapshot}
+};
+
+function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* =====================================================================
+   ЧИСЛА И ФОРМАТИРОВАНИЕ
+   ===================================================================== */
+function num(elId, def = 0) {
+  const el = document.getElementById(elId);
+  if (!el) return def;
+  const v = parseFloat(String(el.value).replace(",", "."));
+  return isNaN(v) ? def : v;
+}
+function fmt(n, decimals = 0) {
+  if (!isFinite(n)) n = 0;
+  return n.toLocaleString("ru-RU", {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+}
+/* --- Валюты: символы и пересчёт в валюту расчёта через курсы ЦБ --- */
+const CURRENCY_SYMBOLS = {
+  USD:"$", EUR:"€", GBP:"£", JPY:"¥", CNY:"¥", RUB:"₽", KZT:"₸", TRY:"₺",
+  KRW:"₩", INR:"₹", CHF:"₣", UZS:"сум", AED:"AED",
+};
+function ccySym(ccy) { return CURRENCY_SYMBOLS[ccy] || ccy || ""; }
+function baseSym() { return ccySym(state.currency); }
+
+// Сколько сумов стоит 1 единица валюты ccy
+function uzsPerUnit(ccy) {
+  if (ccy === "UZS") return 1;
+  const fx = num("fx-rate", 0);
+  if (ccy === state.currency) return fx;            // валюта расчёта — по полю курса (можно править вручную)
+  const c = state.currencies.find(x => x.ccy === ccy);
+  if (c && c.nominal) return c.rate / c.nominal;    // остальные — по курсу ЦБ
+  return fx;                                          // неизвестная валюта офлайн — как валюта расчёта
+}
+// Перевод суммы из валюты currency в валюту расчёта
+function toBase(amount, currency) {
+  const a = parseFloat(String(amount).replace(",", "."));
+  if (isNaN(a)) return 0;
+  const perBase = uzsPerUnit(state.currency);
+  if (!perBase) return currency === state.currency ? a : 0;
+  return a * uzsPerUnit(currency) / perBase;
+}
+function allCurrencyCodes() {
+  const list = state.currencies.length ? state.currencies.map(c => c.ccy) : FALLBACK_CURRENCIES;
+  const ordered = [state.currency, "UZS", ...list.filter(c => c !== state.currency && c !== "UZS")];
+  return [...new Set(ordered)];
+}
+function currencyOptionsHtml(selected) {
+  return allCurrencyCodes().map(c => `<option value="${c}" ${c === selected ? "selected" : ""}>${c}</option>`).join("");
+}
+
+/* =====================================================================
+   РАСЧЁТНАЯ ЛОГИКА (проверена отдельно юнит-тестами на Node.js)
+   ===================================================================== */
+function totalWeightKg(p) { return p.qty * p.unitWeightKg; }
+function contractValueRaw(p) { return p.qty * p.unitPriceUsd; }                 // в валюте товара
+function contractValueBase(p) { return toBase(contractValueRaw(p), p.priceCurrency || state.currency); }  // в валюте расчёта
+function totalBoxes(p) { return p.unitsPerBox > 0 ? Math.ceil(p.qty / p.unitsPerBox) : 0; }
+function boxVolumeCbm(p) { return (p.boxL * p.boxW * p.boxH) / 1000000; }
+function totalVolumeCbm(p) { return totalBoxes(p) * boxVolumeCbm(p); }
+function volumetricWeightKg(p) { return (totalVolumeCbm(p) * 1000000) / 6000; }
+
+function getSettings() {
+  const fx = num("fx-rate", 0);
+  const s = state.settings;
+  return {
+    fxRate: fx,
+    vatRatePct: num("vat-rate", 0),
+    borderShare: num("border-share", 0) / 100,
+    brokerFeeUsd: toBase(s.broker.amount, s.broker.currency),
+    localLogisticsUsd: toBase(s.local.amount, s.local.currency),
+    recipientDeliveryUsd: toBase(s.recipientDelivery.amount, s.recipientDelivery.currency),
+    warehouseCostUsd: toBase(s.warehouse.amount, s.warehouse.currency),
+    otherCostsUsd: toBase(s.other.amount, s.other.currency),
+  };
+}
+
+// deliveryCostBase — доля доставки, уже пересчитанная в валюту расчёта
+function calcForProduct(p, settings, deliveryCostBase) {
+  const contractValue = contractValueBase(p);
+  const deliveryCost = deliveryCostBase;
+  const certBase = toBase(p.certCostUsd, p.priceCurrency || state.currency);
+  const insuranceBase = toBase(p.insuranceCostUsd, p.priceCurrency || state.currency);
+  const borderDelivery = deliveryCost * settings.borderShare;
+  // страховка входит в таможенную стоимость (принцип CIF)
+  const customsValue = contractValue + borderDelivery + insuranceBase;
+  const duty = customsValue * (p.dutyRatePct / 100);
+  const vat = p.vatExempt ? 0 : (customsValue + duty) * (settings.vatRatePct / 100);
+  const fixed = certBase + settings.brokerFeeUsd + settings.localLogisticsUsd +
+                settings.recipientDeliveryUsd + settings.warehouseCostUsd + settings.otherCostsUsd;
+  const totalUsd = contractValue + deliveryCost + insuranceBase + duty + vat + fixed;
+  const totalUzs = totalUsd * settings.fxRate;
+  const qty = Math.max(p.qty, 1);
+  return {
+    contractValue, deliveryCost, insurance: insuranceBase, billedWeight: totalWeightKg(p),
+    customsValue, duty, vat,
+    certCost: certBase, brokerFee: settings.brokerFeeUsd, localLogistics: settings.localLogisticsUsd,
+    recipientDelivery: settings.recipientDeliveryUsd, warehouseCost: settings.warehouseCostUsd,
+    otherCosts: settings.otherCostsUsd, totalUsd, totalUzs,
+    perUnitUsd: totalUsd / qty, perUnitUzs: totalUzs / qty,
+  };
+}
+
+/* =====================================================================
+   НАВИГАЦИЯ ПО ВКЛАДКАМ
+   ===================================================================== */
+function switchTab(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + name).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+}
+
+/* =====================================================================
+   ТЕМА
+   ===================================================================== */
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", state.darkMode ? "dark" : "light");
+  document.getElementById("btn-theme").textContent = state.darkMode ? "☀️ Светлая" : "🌙 Тёмная";
+}
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  applyTheme();
+}
+
+/* =====================================================================
+   НАСТРОЙКИ: рендер и обработчики
+   ===================================================================== */
+function renderIncotermSelect() {
+  const sel = document.getElementById("incoterm-select");
+  const blank = `<option value="" ${state.incoterm === "" ? "selected" : ""}>— выберите базис —</option>`;
+  sel.innerHTML = blank + Object.keys(INCOTERMS).map(k =>
+    `<option value="${k}" ${k === state.incoterm ? "selected" : ""}>${k}</option>`).join("");
+  updateIncotermNote();
+}
+function updateIncotermNote() {
+  const note = state.incoterm && INCOTERMS[state.incoterm] ? INCOTERMS[state.incoterm].note : "";
+  document.getElementById("incoterm-note").textContent = note;
+}
+function onIncotermChange() {
+  state.incoterm = document.getElementById("incoterm-select").value;
+  updateIncotermNote();
+  // долю доставки в таможенной стоимости пользователь вводит сам — не подставляем автоматически
+}
+
+/* --- Валюта и курс ЦБ Узбекистана (cbu.uz) --- */
+const FALLBACK_CURRENCIES = ["USD","EUR","RUB","CNY","KZT","GBP","TRY","AED","KRW","JPY"];
+function renderCurrencySelect() {
+  const sel = document.getElementById("currency-select");
+  const list = state.currencies.length ? state.currencies.map(c => c.ccy) : FALLBACK_CURRENCIES;
+  if (!list.includes(state.currency)) state.currency = list[0];
+  sel.innerHTML = list.map(ccy =>
+    `<option value="${ccy}" ${ccy === state.currency ? "selected" : ""}>${ccy}</option>`).join("");
+  document.getElementById("fx-cur-label").textContent = state.currency;
+}
+function onCurrencyChange() {
+  state.currency = document.getElementById("currency-select").value;
+  document.getElementById("fx-cur-label").textContent = state.currency;
+  return fetchRateForSelected().then(() => refreshCurrencyUI(true));
+}
+// Перерисовать всё, где участвует валюта (символы и выпадающие списки)
+function refreshCurrencyUI(clearResults) {
+  renderProductCurrencySelect();
+  renderFixedCosts();
+  renderDeliveryOptions();
+  renderProductsList();
+  if (clearResults) {
+    state.resultRows = [];
+    renderResults();
+    document.getElementById("results-summary").textContent = "Валюта расчёта изменена — нажмите «Рассчитать» заново.";
+    document.getElementById("results-export-row").style.display = "none";
+  }
+}
+function renderProductCurrencySelect() {
+  const sel = document.getElementById("p-currency");
+  if (!sel) return;
+  const codes = allCurrencyCodes();
+  const cur = sel.value && codes.includes(sel.value) ? sel.value : state.currency;
+  sel.innerHTML = codes.map(c => `<option value="${c}" ${c === cur ? "selected" : ""}>${c}</option>`).join("");
+}
+async function loadCbuCurrencies() {
+  try {
+    const r = await fetch("https://cbu.uz/ru/arkhiv-kursov-valyut/json/");
+    if (!r.ok) throw new Error("status " + r.status);
+    const j = await r.json();
+    state.currencies = j.map(x => ({
+      ccy: x.Ccy, name: x.CcyNm_RU, rate: parseFloat(x.Rate),
+      nominal: parseFloat(x.Nominal) || 1, date: x.Date,
+    }));
+    renderCurrencySelect();
+    applyRateFromCbu();
+    refreshCurrencyUI(false);   // обновить списки валют во всех полях полным списком ЦБ
+  } catch (e) {
+    document.getElementById("fx-hint").textContent =
+      "Не удалось подтянуть курс с cbu.uz (нет сети или доступ заблокирован) — введите курс вручную.";
+  }
+}
+function applyRateFromCbu() {
+  const c = state.currencies.find(x => x.ccy === state.currency);
+  if (!c) return false;
+  const perUnit = c.nominal ? c.rate / c.nominal : c.rate;  // курс за 1 единицу валюты
+  document.getElementById("fx-rate").value = perUnit.toFixed(2);
+  const today = new Date().toLocaleDateString("ru-RU");
+  let hint = `Курс ЦБ, действующий на сегодня (${today}): 1 ${c.ccy} = ${fmt(perUnit, 2)} сум.`;
+  if (c.date && c.date !== today) {
+    hint += ` (ЦБ обновил его ${c.date}; по выходным и праздникам курс не меняется.)`;
+  }
+  hint += " Можно изменить вручную.";
+  document.getElementById("fx-hint").textContent = hint;
+  return true;
+}
+async function fetchRateForSelected() {
+  if (!state.currencies.length) { await loadCbuCurrencies(); return; }
+  if (!applyRateFromCbu()) {
+    document.getElementById("fx-hint").textContent = "Курс для этой валюты не найден — введите вручную.";
+  }
+}
+
+function renderFixedCosts() {
+  const keys = ["broker", "local", "recipientDelivery", "warehouse", "other"];
+  const wrap = document.getElementById("fixed-costs-list");
+  wrap.innerHTML = keys.map(key => {
+    const f = state.settings[key];
+    return `
+      <div class="field" style="margin-bottom:14px;">
+        <label>${f.label}</label>
+        <div class="money-row">
+          <input type="text" inputmode="decimal" value="${f.amount}" placeholder="0" onchange="updateFixedCost('${key}', this.value)">
+          <select style="flex:0 0 auto; width:auto;" onchange="setFixedCostCurrency('${key}', this.value)">
+            ${currencyOptionsHtml(f.currency)}
+          </select>
+        </div>
+        ${f.hint ? `<div class="hint">${f.hint}</div>` : ""}
+      </div>`;
+  }).join("");
+}
+function updateFixedCost(key, value) {
+  state.settings[key].amount = value;
+}
+function setFixedCostCurrency(key, currency) {
+  state.settings[key].currency = currency;
+}
+
+/* =====================================================================
+   ТОВАРЫ: форма, список, CRUD
+   ===================================================================== */
+function clearProductFormFields() {
+  const ids = ["p-name","p-hs","p-qty","p-price","p-weight","p-duty","p-cert","p-insurance","p-nw","p-gw",
+               "p-unit-l","p-unit-w","p-unit-h","p-units-per-box","p-box-l","p-box-w","p-box-h",
+               "p-pallet-l","p-pallet-w","p-pallet-h","p-pallet-qty"];
+  ids.forEach(id => document.getElementById(id).value = "");
+  document.getElementById("p-units-per-box").value = 1;
+  renderProductCurrencySelect();
+  document.getElementById("p-currency").value = state.currency;
+}
+function resetProductForm() {
+  state.editingProductId = null;
+  clearProductFormFields();
+  document.getElementById("product-form-title").textContent = "Добавить товар";
+  document.getElementById("btn-save-product").textContent = "Добавить товар";
+  document.getElementById("btn-cancel-edit").style.display = "none";
+}
+function collectProductFromForm() {
+  return {
+    id: state.editingProductId || uid(),
+    name: document.getElementById("p-name").value.trim() || "Товар",
+    hsCode: document.getElementById("p-hs").value.trim(),
+    qty: num("p-qty"), unitPriceUsd: num("p-price"), unitWeightKg: num("p-weight"),
+    dutyRatePct: num("p-duty"), certCostUsd: num("p-cert"), insuranceCostUsd: num("p-insurance"), vatExempt: false,
+    priceCurrency: (document.getElementById("p-currency") || {}).value || state.currency,
+    nwKg: num("p-nw"), gwKg: num("p-gw"),
+    unitL: num("p-unit-l"), unitW: num("p-unit-w"), unitH: num("p-unit-h"),
+    unitsPerBox: num("p-units-per-box", 1),
+    boxL: num("p-box-l"), boxW: num("p-box-w"), boxH: num("p-box-h"),
+    palletL: num("p-pallet-l"), palletW: num("p-pallet-w"), palletH: num("p-pallet-h"),
+    palletQty: num("p-pallet-qty"),
+  };
+}
+function saveProduct() {
+  const p = collectProductFromForm();
+  if (p.qty <= 0) { alert("Количество должно быть больше нуля."); return; }
+  if (state.editingProductId) {
+    const idx = state.products.findIndex(x => x.id === state.editingProductId);
+    if (idx >= 0) state.products[idx] = p;
+  } else {
+    state.products.push(p);
+  }
+  resetProductForm();
+  renderProductsList();
+}
+function editProduct(id) {
+  const p = state.products.find(x => x.id === id);
+  if (!p) return;
+  state.editingProductId = id;
+  document.getElementById("p-name").value = p.name;
+  document.getElementById("p-hs").value = p.hsCode;
+  document.getElementById("p-qty").value = p.qty;
+  document.getElementById("p-price").value = p.unitPriceUsd;
+  document.getElementById("p-weight").value = p.unitWeightKg;
+  document.getElementById("p-duty").value = p.dutyRatePct;
+  document.getElementById("p-cert").value = p.certCostUsd;
+  document.getElementById("p-insurance").value = p.insuranceCostUsd != null ? p.insuranceCostUsd : "";
+  renderProductCurrencySelect();
+  document.getElementById("p-currency").value = p.priceCurrency || state.currency;
+  document.getElementById("p-nw").value = p.nwKg != null ? p.nwKg : "";
+  document.getElementById("p-gw").value = p.gwKg != null ? p.gwKg : "";
+  document.getElementById("p-unit-l").value = p.unitL;
+  document.getElementById("p-unit-w").value = p.unitW;
+  document.getElementById("p-unit-h").value = p.unitH;
+  document.getElementById("p-units-per-box").value = p.unitsPerBox;
+  document.getElementById("p-box-l").value = p.boxL;
+  document.getElementById("p-box-w").value = p.boxW;
+  document.getElementById("p-box-h").value = p.boxH;
+  document.getElementById("p-pallet-l").value = p.palletL;
+  document.getElementById("p-pallet-w").value = p.palletW;
+  document.getElementById("p-pallet-h").value = p.palletH;
+  document.getElementById("p-pallet-qty").value = p.palletQty;
+  document.getElementById("product-form-title").textContent = "Изменить товар";
+  document.getElementById("btn-save-product").textContent = "Сохранить изменения";
+  document.getElementById("btn-cancel-edit").style.display = "inline-flex";
+  switchTab("products");
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+function deleteProduct(id) {
+  if (!confirm("Удалить этот товар из списка?")) return;
+  state.products = state.products.filter(x => x.id !== id);
+  if (state.editingProductId === id) resetProductForm();
+  renderProductsList();
+}
+function renderProductsList() {
+  const wrap = document.getElementById("products-list");
+  if (!state.products.length) {
+    wrap.innerHTML = `<div class="empty-state">Пока нет ни одного товара — заполните форму выше.</div>`;
+    return;
+  }
+  wrap.innerHTML = state.products.map(p => `
+    <div class="item-card" onclick="editProduct('${p.id}')">
+      <div class="item-card-main">
+        <div class="item-card-title">${escapeHtml(p.name)}</div>
+        <div class="item-card-sub">${fmt(p.qty)} шт × ${ccySym(p.priceCurrency || state.currency)}${p.unitPriceUsd} · вес ${p.unitWeightKg} кг/шт · общий вес ${fmt(totalWeightKg(p))} кг</div>
+      </div>
+      <div class="item-card-actions">
+        <button class="icon-btn" onclick="event.stopPropagation(); editProduct('${p.id}')">✏️</button>
+        <button class="icon-btn danger" onclick="event.stopPropagation(); deleteProduct('${p.id}')">🗑️</button>
+      </div>
+    </div>`).join("");
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* =====================================================================
+   ТОВАРЫ: конфигуратор паллет (ссылки) и данные для перевозчика
+   ===================================================================== */
+function toggleConfigMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById("config-menu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+document.addEventListener("click", () => {
+  const menu = document.getElementById("config-menu");
+  if (menu) menu.style.display = "none";
+});
+
+function dimStr(l, w, h) {
+  if (!l && !w && !h) return "";
+  return `${fmt(l)}×${fmt(w)}×${fmt(h)} см`;
+}
+function buildCarrierText() {
+  const lines = [];
+  lines.push("ДАННЫЕ ДЛЯ РАСЧЁТА ПЕРЕВОЗКИ");
+  lines.push("=".repeat(40));
+  lines.push("");
+  if (!state.products.length) {
+    lines.push("(во вкладке «Товары» пока нет ни одного товара)");
+    lines.push("");
+  }
+  state.products.forEach((p, idx) => {
+    if (state.products.length > 1) lines.push(`--- Товар ${idx + 1} ---`);
+    lines.push(`Товар: ${p.name || ""}`);
+    lines.push("Материал: ");
+    lines.push("Применение: ");
+    lines.push(`Код ТН ВЭД: ${p.hsCode || ""}`);
+    lines.push("Лого: ");
+    lines.push(`Тираж: ${p.qty ? fmt(p.qty) + " шт" : ""}`);
+    lines.push(`Стоимость: ${p.qty && p.unitPriceUsd ? ccySym(p.priceCurrency || state.currency) + fmt(contractValueRaw(p), 2) : ""}`);
+    lines.push(`кол-во коробов: ${totalBoxes(p) || ""}`);
+    lines.push(`размер коробов: ${dimStr(p.boxL, p.boxW, p.boxH)}`);
+    lines.push(`количество паллет: ${p.palletQty ? fmt(p.palletQty) : ""}`);
+    lines.push(`размер паллет: ${dimStr(p.palletL, p.palletW, p.palletH)}`);
+    lines.push(`cbm: ${totalVolumeCbm(p) ? fmt(totalVolumeCbm(p), 2) + " м³" : ""}`);
+    const nw = p.nwKg ? fmt(p.nwKg, 1) : "—";
+    const gw = p.gwKg ? fmt(p.gwKg, 1) : "—";
+    lines.push(`NW/GW: ${nw} / ${gw} кг`);
+    lines.push("");
+  });
+  lines.push("Вывоз по адресу: ");
+  lines.push("Готовность груза на фабрике: ");
+  lines.push("Маршрут: ");
+  lines.push("Адрес забора: ");
+  lines.push(`Базис INCOTERMS: ${state.incoterm || ""}`);
+  lines.push("");
+  lines.push("Прошу, пожалуйста, прислать ответ по следующему шаблону:");
+  lines.push("- сумма фрахта");
+  lines.push("- терминальные расходы в стране назначения");
+  lines.push("- стоимость вывоза на склад в стране назначения");
+  lines.push("- возможные дополнительные расходы");
+  lines.push("- маршрут доставки");
+  lines.push("- станция или аэропорт отправления / город погрузки в фуру (склад агента или другое место)");
+  lines.push("- транзитный срок доставки");
+  lines.push("- пункт погранперехода");
+  lines.push("- таможенный пост");
+  lines.push("- ближайшая дата выхода/вылета");
+  lines.push("- регулярность выхода/вылета");
+  return lines.join("\n");
+}
+function showCarrierData() {
+  document.getElementById("carrier-text").textContent = buildCarrierText();
+  document.getElementById("carrier-overlay").classList.add("show");
+}
+function closeCarrier() { document.getElementById("carrier-overlay").classList.remove("show"); }
+function copyCarrier() { copyTextToClipboard(document.getElementById("carrier-text").textContent); }
+
+/* =====================================================================
+   ДОСТАВКА: пользователь добавляет способы и вписывает общую сумму
+   ===================================================================== */
+function renderDeliveryOptions() {
+  const wrap = document.getElementById("delivery-options-list");
+  if (!state.deliveryOptions.length) {
+    wrap.innerHTML = `<div class="empty-state">Пока не добавлено ни одного способа доставки — нажмите «Добавить».</div>`;
+    return;
+  }
+  const methods = deliveryMethods();
+  wrap.innerHTML = state.deliveryOptions.map((opt, i) => {
+    const options = methods.map(m =>
+      `<option value="${m.key}" ${m.key === opt.methodKey ? "selected" : ""}>${m.label}</option>`).join("");
+    return `
+    <div class="card">
+      <div class="field-row" style="align-items:flex-end; margin-bottom:0;">
+        <div class="field wide">
+          <label>Способ доставки</label>
+          <select onchange="updateDeliveryMethod(${i}, this.value)">${options}</select>
+        </div>
+        <div class="field">
+          <label>Общая сумма доставки</label>
+          <div class="money-row">
+            <input type="text" inputmode="decimal" value="${opt.amount}" placeholder="0"
+                   onchange="updateDeliveryAmount(${i}, this.value)">
+            <select style="flex:0 0 auto; width:auto;" onchange="setDeliveryCurrency(${i}, this.value)">
+              ${currencyOptionsHtml(opt.currency)}
+            </select>
+          </div>
+        </div>
+        <button class="icon-btn danger" style="flex:0 0 auto; margin-bottom:2px;" onclick="removeDeliveryOption(${i})">🗑️</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+function addDeliveryOption() {
+  const methods = deliveryMethods();
+  state.deliveryOptions.push({methodKey: methods[0].key, amount: "", currency: state.currency});
+  renderDeliveryOptions();
+}
+function updateDeliveryMethod(i, value) { state.deliveryOptions[i].methodKey = value; }
+function updateDeliveryAmount(i, value) { state.deliveryOptions[i].amount = value; }
+function setDeliveryCurrency(i, currency) { state.deliveryOptions[i].currency = currency; }
+function removeDeliveryOption(i) { state.deliveryOptions.splice(i, 1); renderDeliveryOptions(); }
+
+/* =====================================================================
+   РЕЗУЛЬТАТ: расчёт, список, детальный просчёт
+   ===================================================================== */
+function runCalculation() {
+  if (!state.products.length) {
+    alert("Добавьте хотя бы один товар во вкладке «Товары».");
+    switchTab("products");
+    return;
+  }
+  if (!state.deliveryOptions.length) {
+    alert("Добавьте хотя бы один способ доставки во вкладке «Доставка».");
+    switchTab("delivery");
+    return;
+  }
+  const settings = getSettings();
+  const totalWeight = state.products.reduce((s, p) => s + totalWeightKg(p), 0);
+  const totalContract = state.products.reduce((s, p) => s + contractValueBase(p), 0);
+  const n = state.products.length;
+
+  // варианты доставки с общей суммой, приведённой к валюте расчёта
+  const options = state.deliveryOptions.map((opt, idx) => {
+    const amount = parseFloat(String(opt.amount).replace(",", ".")) || 0;
+    return {
+      key: "opt" + idx, methodKey: opt.methodKey, label: methodLabel(opt.methodKey),
+      amount, currency: opt.currency, totalUsd: toBase(amount, opt.currency),
+    };
+  });
+
+  state.resultRows = [];
+  for (const product of state.products) {
+    // доля этого товара в общей сумме доставки — пропорционально весу
+    // (если весов нет — по стоимости, иначе поровну)
+    const w = totalWeightKg(product);
+    let frac;
+    if (totalWeight > 0) frac = w / totalWeight;
+    else if (totalContract > 0) frac = contractValueBase(product) / totalContract;
+    else frac = 1 / n;
+
+    const rows = options.map(mode => {
+      const share = mode.totalUsd * frac;
+      return {mode, frac, r: calcForProduct(product, settings, share)};
+    });
+    const best = Math.min(...rows.map(x => x.r.totalUsd));
+    for (const {mode, frac, r} of rows) {
+      state.resultRows.push({
+        product, mode, frac, r, settings,
+        isBest: Math.abs(r.totalUsd - best) < 0.01,
+        isCargo: mode.methodKey === "cargo",
+      });
+    }
+  }
+  renderResults();
+  document.getElementById("results-summary").textContent =
+    `Зелёным — самый дешёвый способ по каждому товару. Общая сумма доставки делится между товарами ` +
+    `пропорционально весу. Курс: 1 ${state.currency} = ${fmt(settings.fxRate)} сум. ` +
+    `Базис ${state.incoterm || "не указан"}. Нажмите на карточку — детальный расчёт.`;
+  document.getElementById("results-export-row").style.display = "flex";
+  switchTab("results");
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function renderResults() {
+  const wrap = document.getElementById("results-list");
+  if (!state.resultRows.length) {
+    wrap.innerHTML = `<div class="empty-state">Пока нет расчёта.</div>`;
+    return;
+  }
+  wrap.innerHTML = state.resultRows.map((row, i) => {
+    const {product, mode, r, isBest, isCargo} = row;
+    const fixedTotal = r.certCost + r.brokerFee + r.localLogistics + r.recipientDelivery + r.warehouseCost + r.otherCosts;
+    return `
+    <div class="item-card result-card ${isBest ? "best" : ""} ${isCargo ? "cargo" : ""}" style="display:block;" onclick="showDetail(${i})">
+      <div class="item-card-title">${escapeHtml(product.name)}</div>
+      <div class="item-card-sub">${escapeHtml(mode.label)} · доставка ${baseSym()}${fmt(r.deliveryCost)}</div>
+      <div class="result-grid">
+        <div>Контракт: <b>${baseSym()}${fmt(r.contractValue)}</b></div>
+        <div>Доставка: <b>${baseSym()}${fmt(r.deliveryCost)}</b></div>
+        <div>Страховка: <b>${baseSym()}${fmt(r.insurance)}</b></div>
+        <div>Пошлина: <b>${baseSym()}${fmt(r.duty)}</b></div>
+        <div>НДС: <b>${baseSym()}${fmt(r.vat)}</b></div>
+        <div>Расходы: <b>${baseSym()}${fmt(fixedTotal)}</b></div>
+      </div>
+      <div class="result-total">Итого: ${baseSym()}${fmt(r.totalUsd)} · ${fmt(r.perUnitUsd, 3)} ${baseSym()}/шт · ${fmt(r.perUnitUzs)} сум/шт</div>
+    </div>`;
+  }).join("");
+}
+
+function buildDetailText(i) {
+  const {product, mode, frac, r, settings} = state.resultRows[i];
+  const lines = [];
+  lines.push(`ТОВАР: ${product.name}`);
+  lines.push(`СПОСОБ ДОСТАВКИ: ${mode.label}`);
+  lines.push("=".repeat(50));
+  lines.push("");
+  const S = baseSym();
+  const pc = ccySym(product.priceCurrency || state.currency);
+  lines.push(`1. Контракт = ${product.qty} шт × ${pc}${product.unitPriceUsd} = ${S}${fmt(r.contractValue,2)}`);
+  lines.push(`2. Доставка (общая сумма за партию) = ${fmt(mode.amount, 2)} ${ccySym(mode.currency)} = ${S}${fmt(mode.totalUsd,2)}`);
+  lines.push(`   Доля этого товара по весу = ${fmt(frac*100,1)}%  →  ${S}${fmt(r.deliveryCost,2)}`);
+  lines.push(`3. Страховка = ${S}${fmt(r.insurance,2)}`);
+  lines.push(`4. Таможенная стоимость = ${S}${fmt(r.contractValue,2)} + (${S}${fmt(r.deliveryCost,2)} × ${(settings.borderShare*100).toFixed(0)}%) + страховка ${S}${fmt(r.insurance,2)} = ${S}${fmt(r.customsValue,2)}`);
+  const incNote = state.incoterm && INCOTERMS[state.incoterm] ? INCOTERMS[state.incoterm].note : "не указан";
+  lines.push(`   Базис: ${state.incoterm || "—"} — ${incNote}`);
+  lines.push(`5. Пошлина = ${S}${fmt(r.customsValue,2)} × ${product.dutyRatePct.toFixed(1)}% = ${S}${fmt(r.duty,2)}`);
+  lines.push(`6. НДС = (${S}${fmt(r.customsValue,2)} + ${S}${fmt(r.duty,2)}) × ${settings.vatRatePct.toFixed(1)}% = ${S}${fmt(r.vat,2)}`);
+  lines.push("7. Фиксированные расходы на партию (в валюте расчёта):");
+  lines.push(`    Сертификация (по товару):    ${S} ${fmt(r.certCost,2)}`);
+  lines.push(`    Таможенный брокер:           ${S} ${fmt(r.brokerFee,2)}`);
+  lines.push(`    Логистика по стране получ.:  ${S} ${fmt(r.localLogistics,2)}`);
+  lines.push(`    Доставка до склада получат.: ${S} ${fmt(r.recipientDelivery,2)}`);
+  lines.push(`    Складские расходы:           ${S} ${fmt(r.warehouseCost,2)}`);
+  lines.push(`    Резерв:                      ${S} ${fmt(r.otherCosts,2)}`);
+  lines.push(`8. ИТОГО = контракт + доставка + страховка + пошлина + НДС + расходы = ${S}${fmt(r.totalUsd,2)}  (${fmt(r.totalUzs)} сум по курсу ${fmt(settings.fxRate)})`);
+  lines.push(`9. Себестоимость единицы = ${S}${fmt(r.totalUsd,2)} / ${product.qty} шт = ${S}${fmt(r.perUnitUsd,3)}  (${fmt(r.perUnitUzs)} сум)`);
+  return lines.join("\n");
+}
+function showDetail(i) {
+  const {product, mode} = state.resultRows[i];
+  document.getElementById("detail-title").textContent = `${product.name} — ${mode.label}`;
+  document.getElementById("detail-text").textContent = buildDetailText(i);
+  document.getElementById("detail-overlay").classList.add("show");
+}
+function closeDetail() { document.getElementById("detail-overlay").classList.remove("show"); }
+function copyDetail() {
+  const text = document.getElementById("detail-text").textContent;
+  copyTextToClipboard(text);
+}
+function copyTextToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => alert("Скопировано в буфер обмена.")).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); alert("Скопировано в буфер обмена."); }
+  catch (e) { alert("Не удалось скопировать автоматически — выделите текст вручную."); }
+  document.body.removeChild(ta);
+}
+
+/* --- Мини-генератор XLSX (без библиотек): числа, строки и ФОРМУЛЫ --- */
+function colLetter(idx) {           // 0 → A, 1 → B, ...
+  let s = ""; idx++;
+  while (idx > 0) { const m = (idx - 1) % 26; s = String.fromCharCode(65 + m) + s; idx = Math.floor((idx - 1) / 26); }
+  return s;
+}
+function xmlEsc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
+}
+// Ячейка: число, строка, либо объект {v|str|f, v(кэш), s(стиль)}
+function cellXml(cell, ref) {
+  if (cell === null || cell === undefined || cell === "") return "";
+  if (typeof cell === "number") return `<c r="${ref}"><v>${isFinite(cell) ? cell : 0}</v></c>`;
+  if (typeof cell === "string") return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(cell)}</t></is></c>`;
+  const s = cell.s != null ? ` s="${cell.s}"` : "";
+  if (cell.f != null) {
+    const cached = (cell.v !== undefined && isFinite(cell.v)) ? `<v>${cell.v}</v>` : "";
+    return `<c r="${ref}"${s}><f>${xmlEsc(cell.f)}</f>${cached}</c>`;
+  }
+  if (cell.str != null) return `<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(cell.str)}</t></is></c>`;
+  if (cell.v != null) return `<c r="${ref}"${s}><v>${isFinite(cell.v) ? cell.v : 0}</v></c>`;
+  return "";
+}
+function sheetXml(rowsCells, opts) {
+  opts = opts || {};
+  const colsXml = opts.cols
+    ? `<cols>${opts.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>`
+    : "";
+  const viewsXml = opts.freezeHeader
+    ? `<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>`
+    : "";
+  const rowsXml = rowsCells.map((cells, ri) => {
+    const r = ri + 1;
+    const ht = (r === 1 && opts.headerHeight) ? ` ht="${opts.headerHeight}" customHeight="1"` : "";
+    const cellsXml = (cells || []).map((cell, ci) => cellXml(cell, colLetter(ci) + r)).join("");
+    return `<row r="${r}"${ht}>${cellsXml}</row>`;
+  }).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+    `${viewsXml}${colsXml}<sheetData>${rowsXml}</sheetData></worksheet>`;
+}
+// styles.xml: границы, шапка (белый жирный на синем), числовые форматы, моноширинный для текста расчёта
+function stylesXml() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+    `<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>` +
+    `<fonts count="4">` +
+      `<font><sz val="10"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="11"/><color rgb="FF2F5496"/><name val="Calibri"/></font>` +
+      `<font><sz val="9"/><name val="Consolas"/></font>` +
+    `</fonts>` +
+    `<fills count="3">` +
+      `<fill><patternFill patternType="none"/></fill>` +
+      `<fill><patternFill patternType="gray125"/></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FF2F5496"/><bgColor indexed="64"/></patternFill></fill>` +
+    `</fills>` +
+    `<borders count="2">` +
+      `<border><left/><right/><top/><bottom/><diagonal/></border>` +
+      `<border><left style="thin"><color rgb="FFB7B7B7"/></left><right style="thin"><color rgb="FFB7B7B7"/></right><top style="thin"><color rgb="FFB7B7B7"/></top><bottom style="thin"><color rgb="FFB7B7B7"/></bottom><diagonal/></border>` +
+    `</borders>` +
+    `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+    `<cellXfs count="7">` +
+      `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+      `<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>` +
+      `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>` +
+      `<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>` +
+      `<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>` +
+      `<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="top"/></xf>` +
+      `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+    `</cellXfs>` +
+    `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
+    `</styleSheet>`;
+}
+const _CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = _CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(files) {           // files: [{name, data:Uint8Array}] — метод "store" (без сжатия)
+  const enc = new TextEncoder();
+  const u16 = n => [n & 0xFF, (n >>> 8) & 0xFF];
+  const u32 = n => [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
+  const chunks = [], central = []; let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = f.data, crc = crc32(data);
+    const local = [].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+    chunks.push(new Uint8Array(local), name, data);
+    central.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(offset))), name);
+    offset += local.length + name.length + data.length;
+  }
+  const centralStart = offset; let centralSize = 0;
+  for (const c of central) { chunks.push(c); centralSize += c.length; }
+  chunks.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0),
+    u16(files.length), u16(files.length), u32(centralSize), u32(centralStart), u16(0))));
+  let total = 0; for (const c of chunks) total += c.length;
+  const out = new Uint8Array(total); let p = 0;
+  for (const c of chunks) { out.set(c, p); p += c.length; }
+  return out;
+}
+function buildXlsxBlob(rowsCells, sheetName, opts) {
+  const enc = new TextEncoder();
+  const files = [
+    {name: "[Content_Types].xml", data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`)},
+    {name: "_rels/.rels", data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)},
+    {name: "xl/workbook.xml", data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xmlEsc(sheetName || "Расчёт")}" sheetId="1" r:id="rId1"/></sheets><calcPr fullCalcOnLoad="1"/></workbook>`)},
+    {name: "xl/_rels/workbook.xml.rels", data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+    {name: "xl/styles.xml", data: enc.encode(stylesXml())},
+    {name: "xl/worksheets/sheet1.xml", data: enc.encode(sheetXml(rowsCells, opts))},
+  ];
+  return zipStore(files);
+}
+
+function exportResultsXlsx() {
+  if (!state.resultRows.length) return;
+  const S = baseSym();
+  // конструкторы ячеек со стилями: Hd шапка, Tx текст, N2/N0 числа, F2/F0 формулы, Dt/Bd текст под таблицей
+  const Hd = str => ({str, s: 1});
+  const Tx = str => ({str, s: 2});
+  const N2 = v => ({v, s: 3});
+  const N0 = v => ({v, s: 4});
+  const F2 = (f, v) => ({f, v, s: 3});
+  const F0 = (f, v) => ({f, v, s: 4});
+  const Dt = str => ({str, s: 5});
+  const Bd = str => ({str, s: 6});
+
+  const header = ["Товар", "Способ доставки", "Кол-во, шт", `Цена/шт, ${S}`, `Контракт, ${S}`,
+    `Доставка (доля), ${S}`, "Доля дост. в тамож., %", `Страховка, ${S}`, `Тамож. стоимость, ${S}`,
+    "Пошлина, %", `Пошлина, ${S}`, "НДС, %", `НДС, ${S}`, `Сертификация, ${S}`, `Брокер, ${S}`,
+    `Логистика, ${S}`, `Доставка получ., ${S}`, `Склад, ${S}`, `Резерв, ${S}`, `Итого, ${S}`,
+    "Курс, сум за 1", "Итого, сум", `Себест./шт, ${S}`, "Себест./шт, сум"];
+  const colWidths = [24, 20, 10, 12, 13, 15, 13, 12, 16, 10, 12, 9, 12, 13, 11, 12, 15, 11, 11, 14, 13, 16, 13, 16];
+
+  const rows = [header.map(Hd)];
+  state.resultRows.forEach(({product, mode, r, settings}, idx) => {
+    const R = idx + 2;
+    const c = n => colLetter(n) + R;                // ссылка на ячейку столбца n в текущей строке
+    const qty = product.qty || 0;
+    const unitBase = qty ? r.contractValue / qty : 0;
+    rows.push([
+      Tx(product.name), Tx(mode.label), N0(qty), N2(unitBase),
+      F2(`${c(2)}*${c(3)}`, r.contractValue),                                       // 4 Контракт
+      N2(r.deliveryCost), N0(settings.borderShare * 100), N2(r.insurance),          // 5-7 Доставка, Доля%, Страховка
+      F2(`${c(4)}+${c(5)}*${c(6)}/100+${c(7)}`, r.customsValue),                    // 8 Тамож. стоимость
+      N0(product.dutyRatePct),
+      F2(`${c(8)}*${c(9)}/100`, r.duty),                                           // 10 Пошлина
+      N0(settings.vatRatePct),
+      F2(`(${c(8)}+${c(10)})*${c(11)}/100`, r.vat),                                // 12 НДС
+      N2(r.certCost), N2(r.brokerFee), N2(r.localLogistics), N2(r.recipientDelivery),
+      N2(r.warehouseCost), N2(r.otherCosts),                                        // 13-18 фикс. расходы
+      F2(`${c(4)}+${c(5)}+${c(7)}+${c(10)}+${c(12)}+${c(13)}+${c(14)}+${c(15)}+${c(16)}+${c(17)}+${c(18)}`, r.totalUsd), // 19 Итого
+      N2(settings.fxRate),
+      F0(`${c(19)}*${c(20)}`, r.totalUzs),                                          // 21 Итого сум
+      F2(`${c(19)}/${c(2)}`, r.perUnitUsd),                                         // 22 Себест./шт
+      F0(`${c(21)}/${c(2)}`, r.perUnitUzs),                                         // 23 Себест./шт сум
+    ]);
+  });
+  // Под таблицей — детальный расчёт каждой карточки (тот же текст, что во всплывающем окне)
+  rows.push([]);
+  rows.push([Bd("ДЕТАЛЬНЫЙ РАСЧЁТ ПО КАЖДОЙ КАРТОЧКЕ")]);
+  rows.push([]);
+  state.resultRows.forEach((_, idx) => {
+    buildDetailText(idx).split("\n").forEach(line => rows.push([Dt(line)]));
+    rows.push([]);
+  });
+
+  const blob = buildXlsxBlob(rows, "Расчёт", {cols: colWidths, freezeHeader: true, headerHeight: 34});
+  downloadBlob(blob, "import_calc_result.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+
+function exportResultsCsv() {
+  if (!state.resultRows.length) return;
+  const S = baseSym();
+  const headers = ["Товар","Доставка",`Контракт ${S}`,`Логистика ${S}`,"Вес, кг",`Пошлина ${S}`,`НДС ${S}`,
+                    `Серт.+брокер+склад+проч.${S}`,`До склада получ.${S}`,`Итого ${S}`,`Себест.ед.${S}`,"Себест.ед.сум"];
+  const rows = state.resultRows.map(({product, mode, r}) => {
+    const extra = r.certCost + r.brokerFee + r.localLogistics + r.warehouseCost + r.otherCosts;
+    return [product.name, mode.label, fmt(r.contractValue), fmt(r.deliveryCost), fmt(r.billedWeight),
+            fmt(r.duty), fmt(r.vat), fmt(extra), fmt(r.recipientDelivery), fmt(r.totalUsd),
+            r.perUnitUsd.toFixed(3), fmt(r.perUnitUzs)];
+  });
+  const csv = "\uFEFF" + [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(";")).join("\n");
+  downloadBlob(csv, "import_calc_result.csv", "text/csv;charset=utf-8");
+}
+
+/* =====================================================================
+   ЭКСПОРТ / ИМПОРТ ДАННЫХ (JSON) — вместо файла-сохранения десктоп-версии
+   ===================================================================== */
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportJson() {
+  const data = {
+    darkMode: state.darkMode,
+    incoterm: state.incoterm,
+    currency: state.currency,
+    fxRate: num("fx-rate", 0),
+    vatRate: num("vat-rate", 0),
+    borderShare: num("border-share", 0),
+    fixedCosts: state.settings,
+    products: state.products,
+    deliveryOptions: state.deliveryOptions,
+  };
+  downloadBlob(JSON.stringify(data, null, 2), "import_calc_data.json", "application/json");
+}
+function importJson(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      applyImportedState(data);
+      alert("Данные загружены.");
+    } catch (e) {
+      alert("Не удалось прочитать файл — убедитесь, что это JSON, скачанный из этой же программы.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+function applyImportedState(data) {
+  if (typeof data.darkMode === "boolean") { state.darkMode = data.darkMode; applyTheme(); }
+  state.incoterm = (data.incoterm && INCOTERMS[data.incoterm]) ? data.incoterm : "";
+  if (data.currency) state.currency = data.currency;
+  if (data.fxRate) document.getElementById("fx-rate").value = data.fxRate;
+  if (data.vatRate !== undefined) document.getElementById("vat-rate").value = data.vatRate;
+  if (data.borderShare !== undefined) document.getElementById("border-share").value = data.borderShare;
+  if (data.fixedCosts) state.settings = data.fixedCosts;
+  if (Array.isArray(data.products)) state.products = data.products.map(p => ({
+    ...p, id: p.id || uid(), priceCurrency: p.priceCurrency || data.currency || state.currency || "USD"
+  }));
+  if (Array.isArray(data.deliveryOptions)) {
+    state.deliveryOptions = data.deliveryOptions.map(o => ({
+      methodKey: o.methodKey || deliveryMethods()[0].key,
+      amount: o.amount !== undefined ? o.amount : "",
+      currency: o.currency === "UZS" ? "UZS" : "USD",
+    }));
+  }
+  renderAll();
+}
+
+/* =====================================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ===================================================================== */
+function renderAll() {
+  applyTheme();
+  renderIncotermSelect();
+  renderCurrencySelect();
+  renderProductCurrencySelect();
+  renderFixedCosts();
+  renderProductsList();
+  renderDeliveryOptions();
+  renderResults();
+}
+
+renderAll();
+loadCbuCurrencies();   // подтянуть актуальный список валют и курс с cbu.uz на сегодня
+</script>
+</body>
+</html>
